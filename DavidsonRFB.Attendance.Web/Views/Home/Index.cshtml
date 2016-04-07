@@ -1,0 +1,50 @@
+﻿@model List<DavidsonRFB.Attendance.Web.Models.AttendanceModel>
+
+<h2>Current Attendance</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Rank</th>
+                    <th>Started</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (DavidsonRFB.Attendance.Web.Models.AttendanceModel attendance in Model)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(m => attendance.Employee.Name)</td>
+                        <td>@Html.DisplayFor(m => attendance.Employee.Rank.Description)</td>
+                        <td>@Html.DisplayFor(m => attendance.StartDateTime)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-6">
+        <form class="form-horizontal" role="form">
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Employee Id:</label>
+                <div class="col-lg-8">
+                    <input class="form-control" type="text">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Job:</label>
+                <div class="col-lg-8">
+                    @Html.DropDownList("jobs", new SelectList(ViewBag.Jobs, "JobId", "Description"), new { htmlAttributes = new { @class = "form-control" } })
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label"></label>
+                <div class="col-md-8">
+                    <input type="button" class="btn btn-primary" value="Clock In/Out">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+        
