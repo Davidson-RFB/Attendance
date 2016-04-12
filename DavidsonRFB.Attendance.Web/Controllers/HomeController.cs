@@ -1,77 +1,122 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Security;
+using DavidsonRFB.Attendance.Web.DAL;
+using DavidsonRFB.Attendance.Web.Filters;
 using DavidsonRFB.Attendance.Web.Models;
 
 namespace DavidsonRFB.Attendance.Web.Controllers
 {
+    //[Authorize(Roles = "Log Time")]
     public class HomeController : Controller
     {
-        private List<RankModel> Ranks
-        {
-            get
-            {
-                List<RankModel> ranks = new List<RankModel>();
-                ranks.Add(new RankModel() { RankId = 1, Description = "Captain", ImageSource = "", IsActive = true });
-                ranks.Add(new RankModel() { RankId = 2, Description = "Senior Deputy Captain", ImageSource = "", IsActive = true });
-                ranks.Add(new RankModel() { RankId = 3, Description = "Deputy Captain", ImageSource = "", IsActive = true });
-                ranks.Add(new RankModel() { RankId = 4, Description = "Firefighter", ImageSource = "", IsActive = true });
-                ranks.Add(new RankModel() { RankId = 5, Description = "Trainee", ImageSource = "", IsActive = true });
-                ranks.Add(new RankModel() { RankId = 6, Description = "Group Officer", ImageSource = "", IsActive = true });
-                return ranks;
-            }
-        }
-
-        private List<JobModel> Jobs
-        {
-            get
-            {
-                List<JobModel> Jobs = new List<JobModel>();
-                Jobs.Add(new JobModel() { JobId = 1, Description = "Duty Crew", IsActive = true });
-                Jobs.Add(new JobModel() { JobId = 1, Description = "Fire Call", IsActive = true });
-                Jobs.Add(new JobModel() { JobId = 1, Description = "Hazard Reduction", IsActive = true });
-                Jobs.Add(new JobModel() { JobId = 1, Description = "Training", IsActive = true });
-                Jobs.Add(new JobModel() { JobId = 1, Description = "Community Engagement", IsActive = true });
-                return Jobs;
-            }
-        }
-
-        private List<EmployeeModel> Employees
-        {
-            get
-            {
-                List<EmployeeModel> employees = new List<EmployeeModel>();
-                employees.Add(new EmployeeModel() { EmployeeId = 1, Name = "Jason King", EmailAddress = "jason@blah.com", RankId = 3, IsActive = true, Rank = Ranks.Single(r => r.RankId == 3) });
-                employees.Add(new EmployeeModel() { EmployeeId = 2, Name = "Rolf Krolke", EmailAddress = "rolf@blah.com", RankId = 6, IsActive = true, Rank = Ranks.Single(r => r.RankId == 6) });
-                employees.Add(new EmployeeModel() { EmployeeId = 3, Name = "Blake Dutton", EmailAddress = "blake@blah.com", RankId = 4, IsActive = true, Rank = Ranks.Single(r => r.RankId == 4) });
-                employees.Add(new EmployeeModel() { EmployeeId = 4, Name = "James McCutcheon", EmailAddress = "james@blah.com", RankId = 4, IsActive = true, Rank = Ranks.Single(r => r.RankId == 4) });
-                employees.Add(new EmployeeModel() { EmployeeId = 5, Name = "Tim Eliot", EmailAddress = "tim@blah.com", RankId = 3, IsActive = true, Rank = Ranks.Single(r => r.RankId == 3) });
-                return employees;
-            }
-        }
-
-        private List<AttendanceModel> AttendingEmployees
-        {
-            get
-            {
-                if (Session["AttendingEmployees"] == null)
-                {
-                    Session["AttendingEmployees"] = new List<AttendanceModel>();
-                }
-                return (List<AttendanceModel>)Session["AttendingEmployees"];
-            }
-            set
-            {
-                Session["AttendingEmployees"] = value;
-            }
-        }
-
+        [LocalAuthorization]
+        [HttpGet]
         public ActionResult Index()
         {
-            ViewBag.Jobs = Jobs;
-            return View(AttendingEmployees);
+            AttendanceContext context = new AttendanceContext();
+
+            var employees = context.Employees.Where(e => e.IsActive).OrderBy(e => e.Name).ToList();
+            employees.Insert(0, new Employee());
+            ViewBag.Employees = employees;
+
+            var jobs = context.Jobs.OrderBy(j => j.Description).ToList();
+            jobs.Insert(0, new Job());
+            ViewBag.Jobs = jobs;
+
+            return View(new Attendees() { CurrentAttendance = context.Attendances.Where(a => !a.EndDateTime.HasValue).ToList() });
+        }
+
+        [LocalAuthorization]
+        [HttpPost]
+        public ActionResult Index(Attendees attendees)
+        {
+            AttendanceContext context = new AttendanceContext();
+
+            if (attendees.EmployeeId > 0)
+            {
+                var currentAttendance = context.Attendances.FirstOrDefault(a => a.EmployeeId == attendees.EmployeeId && !a.EndDateTime.HasValue);
+                if (currentAttendance == null)
+                {
+                    // Clock in
+                    if (attendees.JobId > 0)
+                    {
+                        context.Attendances.Add(new Models.Attendance()
+                        {
+                            EmployeeId = attendees.EmployeeId,
+                            JobId = attendees.JobId,
+                            StartDateTime = DateTime.Now
+                        });
+                        ViewBag.Message = string.Format("{0} has been clocked in", context.Employees.Single(e => e.Id == attendees.EmployeeId).Name);
+                    }
+                    else
+                    {
+                        ViewBag.Message = "Job description is required";
+                    }
+                }
+                else
+                {
+                    // Clock out
+                    currentAttendance.EndDateTime = DateTime.Now;
+                    ViewBag.Message = string.Format("{0} has been clocked out", currentAttendance.Employee.Name);
+                }
+                context.SaveChanges();
+            }
+
+            var employees = context.Employees.Where(e => e.IsActive).OrderBy(e => e.Name).ToList();
+            employees.Insert(0, new Employee());
+            ViewBag.Employees = employees;
+
+            var jobs = context.Jobs.OrderBy(j => j.Description).ToList();
+            jobs.Insert(0, new Job());
+            ViewBag.Jobs = jobs;
+
+            return View(new Attendees() { CurrentAttendance = context.Attendances.Where(a => !a.EndDateTime.HasValue).ToList() });
+        }
+
+        [LocalAuthorization]
+        [HttpGet]
+        public ActionResult ClockOutAll()
+        {
+            AttendanceContext context = new AttendanceContext();
+
+            foreach (var attendance in context.Attendances.Where(a => !a.EndDateTime.HasValue))
+            {
+                // Clock out
+                attendance.EndDateTime = DateTime.Now;
+            }
+            context.SaveChanges();
+
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult CreateCookie()
+        {
+            var authTicket = new FormsAuthenticationTicket(
+                1,                             // version
+                "AttendancePC",                // user name
+                DateTime.Now,                  // created
+                DateTime.Now.AddYears(10),     // expires
+                true,                          // persistent?
+                "Log Time"                     // can be used to store roles
+                );
+
+            string encryptedTicket = FormsAuthentication.Encrypt(authTicket);
+            var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
+            authCookie.Expires = authTicket.Expiration;
+
+            ControllerContext.HttpContext.Response.Cookies.Add(authCookie);
+            return RedirectToAction("Index", "Home");
+        }
+
+        public ActionResult RemoveCookie()
+        {
+            HttpCookie authCookie = ControllerContext.HttpContext.Request.Cookies[FormsAuthentication.FormsCookieName];
+            authCookie.Expires = DateTime.Now;
+            ControllerContext.HttpContext.Response.Cookies.Add(authCookie);
+            return RedirectToAction("Index", "Home");
         }
     }
 }
