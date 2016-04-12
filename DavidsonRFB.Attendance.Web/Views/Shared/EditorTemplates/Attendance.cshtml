@@ -1,0 +1,12 @@
+﻿@model DavidsonRFB.Attendance.Web.Models.Attendance
+
+<tr>
+    <td>
+        @Html.HiddenFor(m => m.Id)
+        @Html.CheckBoxFor(m => m.Selected, new { @class = "selectedCheckBox" })
+    </td>
+    <td>@Html.DisplayFor(m => m.Employee.Name)</td>
+    <td>@Html.DisplayFor(m => m.Employee.Rank.Description)</td>
+    <td>@Html.DisplayFor(m => m.Job.Description)</td>
+    <td>@Html.DisplayFor(m => m.StartDateTime, "ClockInDateTime")</td>
+</tr>

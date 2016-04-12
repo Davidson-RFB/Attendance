@@ -35,36 +35,27 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         {
             AttendanceContext context = new AttendanceContext();
 
-            if (attendees.EmployeeId > 0)
+            if (attendees.EmployeeId > 0 && attendees.JobId > 0)
             {
                 var currentAttendance = context.Attendances.FirstOrDefault(a => a.EmployeeId == attendees.EmployeeId && !a.EndDateTime.HasValue);
                 if (currentAttendance == null)
                 {
                     // Clock in
-                    if (attendees.JobId > 0)
+                    context.Attendances.Add(new Models.Attendance()
                     {
-                        context.Attendances.Add(new Models.Attendance()
-                        {
-                            EmployeeId = attendees.EmployeeId,
-                            JobId = attendees.JobId,
-                            StartDateTime = DateTime.Now
-                        });
-                        ViewBag.Message = string.Format("{0} has been clocked in", context.Employees.Single(e => e.Id == attendees.EmployeeId).Name);
-                    }
-                    else
-                    {
-                        ViewBag.Message = "Job description is required";
-                    }
-                }
-                else
-                {
-                    // Clock out
-                    currentAttendance.EndDateTime = DateTime.Now;
-                    ViewBag.Message = string.Format("{0} has been clocked out", currentAttendance.Employee.Name);
+                        EmployeeId = attendees.EmployeeId,
+                        JobId = attendees.JobId,
+                        StartDateTime = DateTime.Now
+                    });
+                    ViewBag.Message = string.Format("{0} has been clocked in", context.Employees.Single(e => e.Id == attendees.EmployeeId).Name);
                 }
                 context.SaveChanges();
             }
-
+            else
+            {
+                ViewBag.Message = "Name and Job description are required";
+            }
+            
             var employees = context.Employees.Where(e => e.IsActive).OrderBy(e => e.Name).ToList();
             employees.Insert(0, new Employee());
             ViewBag.Employees = employees;
@@ -77,17 +68,21 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         }
 
         [LocalAuthorization]
-        [HttpGet]
-        public ActionResult ClockOutAll()
+        [HttpPost]
+        public ActionResult ClockOut(Attendees attendees)
         {
             AttendanceContext context = new AttendanceContext();
 
-            foreach (var attendance in context.Attendances.Where(a => !a.EndDateTime.HasValue))
+            if (attendees.CurrentAttendance != null)
             {
-                // Clock out
-                attendance.EndDateTime = DateTime.Now;
+                foreach (var attendee in attendees.CurrentAttendance.Where(a => a.Selected))
+                {
+                    // Clock out
+                    var attendance = context.Attendances.FirstOrDefault(a => a.Id == attendee.Id && !a.EndDateTime.HasValue);
+                    attendance.EndDateTime = DateTime.Now;
+                }
+                context.SaveChanges();
             }
-            context.SaveChanges();
 
             return RedirectToAction("Index");
         }

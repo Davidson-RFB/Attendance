@@ -212,6 +212,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
     <None Include="Views\Shared\DisplayTemplates\ClockInDateTime.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\Attendance.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.css" />

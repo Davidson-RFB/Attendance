@@ -50,6 +50,9 @@ namespace DavidsonRFB.Attendance.Web.Models
         public virtual Job Job { get; set; }
         public DateTime StartDateTime { get; set; }
         public DateTime? EndDateTime { get; set; }
+
+        [NotMapped()]
+        public bool Selected { get; set; }
     }
 
     public class Attendees
