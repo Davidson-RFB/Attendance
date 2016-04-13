@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DavidsonRFB.Attendance.Web.Models
@@ -58,7 +60,15 @@ namespace DavidsonRFB.Attendance.Web.Models
     public class Attendees
     {
         public List<Attendance> CurrentAttendance { get; set; }
+
+        [DisplayName("Member")]
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "{0} is required")]
         public int EmployeeId { get; set; }
+
+        [DisplayName("Job")]
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "{0} is required")]
         public int JobId { get; set; }
     }
 }

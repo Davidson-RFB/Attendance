@@ -26,6 +26,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             jobs.Insert(0, new Job());
             ViewBag.Jobs = jobs;
 
+            Response.AddHeader("Refresh", "600");
             return View(new Attendees() { CurrentAttendance = context.Attendances.Where(a => !a.EndDateTime.HasValue).ToList() });
         }
 
@@ -35,7 +36,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         {
             AttendanceContext context = new AttendanceContext();
 
-            if (attendees.EmployeeId > 0 && attendees.JobId > 0)
+            if (ModelState.IsValid)
             {
                 var currentAttendance = context.Attendances.FirstOrDefault(a => a.EmployeeId == attendees.EmployeeId && !a.EndDateTime.HasValue);
                 if (currentAttendance == null)
@@ -51,11 +52,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                 }
                 context.SaveChanges();
             }
-            else
-            {
-                ViewBag.Message = "Name and Job description are required";
-            }
-            
+
             var employees = context.Employees.Where(e => e.IsActive).OrderBy(e => e.Name).ToList();
             employees.Insert(0, new Employee());
             ViewBag.Employees = employees;
@@ -64,6 +61,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             jobs.Insert(0, new Job());
             ViewBag.Jobs = jobs;
 
+            Response.AddHeader("Refresh", "600");
             return View(new Attendees() { CurrentAttendance = context.Attendances.Where(a => !a.EndDateTime.HasValue).ToList() });
         }
 

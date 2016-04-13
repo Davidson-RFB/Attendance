@@ -6,6 +6,10 @@
             $(".selectedCheckBox").prop("checked", $(this).is(":checked"));
         });
     });
+
+    function confirmClockOut() {
+        return confirm("Please confirm that you want to clock out the selected members?");
+    }
 </script>
 
 <div class="row" style="padding-top: 30px;">
@@ -31,7 +35,7 @@
                                 @Html.EditorFor(m => m.CurrentAttendance)
                             </tbody>
                         </table>
-                        <input type="submit" class="btn btn-primary" value="Clock Out" />
+                        <input type="submit" class="btn btn-primary" value="Clock Out" onclick="return confirmClockOut();" />
                     }
                     else
                     {
@@ -49,15 +53,17 @@
                     <legend>Clock In</legend>
                     <div class="form-horizontal">
                         <div class="form-group">
-                            <label class="col-md-3 control-label">Member:</label>
+                            @Html.LabelFor(m => m.EmployeeId, new { @class = "col-md-3 control-label" })
                             <div class="col-md-9">
                                 @Html.DropDownListFor(m => m.EmployeeId, new SelectList(ViewBag.Employees, "Id", "Name"), new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.EmployeeId)
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-md-3 control-label">Job:</label>
+                            @Html.LabelFor(m => m.JobId, new { @class = "col-md-3  control-label" })
                             <div class="col-md-9">
                                 @Html.DropDownListFor(m => m.JobId, new SelectList(ViewBag.Jobs, "Id", "Description"), new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.JobId)
                             </div>
                         </div>
                         <div class="form-group">
