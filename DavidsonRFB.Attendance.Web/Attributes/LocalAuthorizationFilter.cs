@@ -32,15 +32,8 @@ namespace DavidsonRFB.Attendance.Web.Filters
 
         protected override void HandleUnauthorizedRequest(AuthorizationContext filterContext)
         {
-            if (filterContext.HttpContext.Request.IsAuthenticated)
-            {
-                // Return a "403 Forbidden" status rather than redirecting to the login page with the standard "401 Unauthorized"
-                filterContext.Result = new HttpStatusCodeResult((int)System.Net.HttpStatusCode.Forbidden);
-            }
-            else
-            {
-                base.HandleUnauthorizedRequest(filterContext);
-            }
+            // Return a "403 Forbidden" status rather than redirecting to the login page with the standard "401 Unauthorized"
+            filterContext.Result = new HttpStatusCodeResult((int)System.Net.HttpStatusCode.Forbidden);
         }
     }
 }
