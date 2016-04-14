@@ -21,8 +21,16 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li>@Html.ActionLink("Create Cookie", "CreateCookie", "Home")</li>
-                    <li>@Html.ActionLink("Remove Cookie", "RemoveCookie", "Home")</li>
+                    @if (Request.IsAuthenticated)
+                    {
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Cookie <span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>@Html.ActionLink("Create Cookie", "CreateCookie", "Home")</li>
+                                <li>@Html.ActionLink("Remove Cookie", "RemoveCookie", "Home")</li>
+                            </ul>
+                        </li>
+                    }
                 </ul>
                 @Html.Partial("_LoginPartial")
             </div>

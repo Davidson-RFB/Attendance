@@ -2,6 +2,7 @@
 
 namespace DavidsonRFB.Attendance.Web.Controllers
 {
+    [Authorize]
     public class ErrorController : Controller
     {
         [HttpGet]

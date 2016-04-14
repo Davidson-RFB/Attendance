@@ -9,14 +9,13 @@ using DavidsonRFB.Attendance.Web.Models;
 
 namespace DavidsonRFB.Attendance.Web.Controllers
 {
-    //[Authorize(Roles = "Log Time")]
     public class HomeController : Controller
     {
         [LocalAuthorization]
         [HttpGet]
         public ActionResult Index()
         {
-            AttendanceContext context = new AttendanceContext();
+            DAL.AttendanceContext context = new DAL.AttendanceContext();
 
             var employees = context.Employees.Where(e => e.IsActive).OrderBy(e => e.Name).ToList();
             employees.Insert(0, new Employee());
@@ -34,7 +33,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         [HttpPost]
         public ActionResult Index(Attendees attendees)
         {
-            AttendanceContext context = new AttendanceContext();
+            DAL.AttendanceContext context = new DAL.AttendanceContext();
 
             if (ModelState.IsValid)
             {
@@ -69,7 +68,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         [HttpPost]
         public ActionResult ClockOut(Attendees attendees)
         {
-            AttendanceContext context = new AttendanceContext();
+            DAL.AttendanceContext context = new DAL.AttendanceContext();
 
             if (attendees.CurrentAttendance != null)
             {
@@ -85,6 +84,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        [Authorize]
         public ActionResult CreateCookie()
         {
             var authTicket = new FormsAuthenticationTicket(
@@ -104,6 +104,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [Authorize]
         public ActionResult RemoveCookie()
         {
             HttpCookie authCookie = ControllerContext.HttpContext.Request.Cookies[FormsAuthentication.FormsCookieName];

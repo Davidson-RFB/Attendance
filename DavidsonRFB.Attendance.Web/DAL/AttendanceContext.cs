@@ -11,6 +11,8 @@ namespace DavidsonRFB.Attendance.Web.DAL
 
         }
 
+        public DbSet<UserTokenCache> UserTokenCacheList { get; set; }
+
         public DbSet<Models.Attendance> Attendances { get; set; }
         public DbSet<Brigade> Brigades { get; set; }
         public DbSet<Employee> Employees { get; set; }
