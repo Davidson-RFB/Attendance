@@ -19,6 +19,8 @@ namespace DavidsonRFB.Attendance.Web.Models
     {
         public int Id { get; set; }
         public string Description { get; set; }
+        public int BrigadeId { get; set; }
+        public virtual Brigade Brigade { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -33,24 +35,51 @@ namespace DavidsonRFB.Attendance.Web.Models
     public class Employee
     {
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [DisplayName("Firezone Number")]
         public int Id { get; set; }
+
+        [Required]
         public string Name { get; set; }
-        public int? BrigadeId { get; set; }
+
+        [DisplayName("Brigade")]
+        [Required]
+        public int BrigadeId { get; set; }
+
         public virtual Brigade Brigade { get; set; }
+
+        [DisplayName("Rank")]
         public int? RankId { get; set; }
+
         public virtual Rank Rank { get; set; }
+
+        [DisplayName("Active")]
         public bool IsActive { get; set; }
+
+        [DataType(DataType.EmailAddress)]
+        [Required]
+        public string Email { get; set; }
+
         public virtual ICollection<Attendance> Attendances { get; set; }
     }
 
     public class Attendance
     {
         public int Id { get; set; }
+
+        [DisplayName("Member")]
         public int EmployeeId { get; set; }
+
         public virtual Employee Employee { get; set; }
+
+        [DisplayName("Job")]
         public int? JobId { get; set; }
+
         public virtual Job Job { get; set; }
+
+        [DisplayName("Start Time")]
         public DateTime StartDateTime { get; set; }
+
+        [DisplayName("Finish Time")]
         public DateTime? EndDateTime { get; set; }
 
         [NotMapped()]

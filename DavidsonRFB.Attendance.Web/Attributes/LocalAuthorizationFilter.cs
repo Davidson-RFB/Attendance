@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
+using DavidsonRFB.Attendance.Web.DAL;
 
 namespace DavidsonRFB.Attendance.Web.Filters
 {
@@ -19,7 +20,9 @@ namespace DavidsonRFB.Attendance.Web.Filters
                 try
                 {
                     authTicket = FormsAuthentication.Decrypt(authCookie.Value);
-                    if (authTicket.UserData.Contains("Log Time"))
+
+                    AttendanceContext context = new AttendanceContext();
+                    if (context.Brigades.Any(b => b.Id.ToString() == authTicket.Name) && authTicket.UserData.Contains("Log Time"))
                     {
                         return true;
                     }
