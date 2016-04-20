@@ -77,9 +77,13 @@ namespace DavidsonRFB.Attendance.Web.Models
         public virtual Job Job { get; set; }
 
         [DisplayName("Start Time")]
+        [DataType(DataType.DateTime)]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy HH:mm}")]
         public DateTime StartDateTime { get; set; }
 
         [DisplayName("Finish Time")]
+        [DataType(DataType.DateTime)]
+        [DisplayFormat(ApplyFormatInEditMode = true, ConvertEmptyStringToNull = true, DataFormatString = "{0:dd/MM/yyyy HH:mm}")]
         public DateTime? EndDateTime { get; set; }
 
         [NotMapped()]

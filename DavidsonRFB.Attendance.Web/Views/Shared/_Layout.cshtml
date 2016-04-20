@@ -31,6 +31,7 @@
                             </ul>
                         </li>
                         <li>@Html.ActionLink("Employees", "Index", "Employee")</li>
+                        <li>@Html.ActionLink("Attendance", "Index", "Attendance")</li>
                     }
                 </ul>
                 @Html.Partial("_LoginPartial")
@@ -47,6 +48,7 @@
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+    @Scripts.Render("~/bundles/datetime")
     @RenderSection("scripts", required: false)
 </body>
 </html>
