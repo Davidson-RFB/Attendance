@@ -88,6 +88,14 @@ namespace DavidsonRFB.Attendance.Web.Models
 
         [NotMapped()]
         public bool Selected { get; set; }
+
+        [DisplayName("Hours Attended")]
+        [DisplayFormat(DataFormatString = "{0:N0}")]
+        [NotMapped()]
+        public double TotalHours
+        {
+            get { return EndDateTime.HasValue ? EndDateTime.Value.Subtract(StartDateTime).TotalHours : DateTime.Now.Subtract(StartDateTime).TotalHours; }
+        }
     }
 
     public class Attendees

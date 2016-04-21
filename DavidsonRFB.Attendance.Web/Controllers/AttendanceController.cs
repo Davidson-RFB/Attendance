@@ -1,4 +1,6 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
@@ -13,10 +15,44 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         private AttendanceContext db = new AttendanceContext();
 
         // GET: Attendance
-        public ActionResult Index()
+        public ActionResult Index(int? employeeId, int? jobId, DateTime? fromDate, DateTime? toDate)
         {
-            var attendances = db.Attendances.Include(a => a.Employee).Include(a => a.Job);
-            return View(attendances.ToList());
+            List<Models.Attendance> attendanceList = new List<Models.Attendance>();
+
+            if (employeeId.GetValueOrDefault() > 0 || jobId.GetValueOrDefault() > 0 || fromDate.HasValue || toDate.HasValue)
+            {
+                IQueryable<Models.Attendance> attendances = db.Attendances;
+                if (employeeId.GetValueOrDefault() > 0)
+                {
+                    attendances = attendances.Where(a => a.EmployeeId == employeeId.Value);
+                }
+                if (jobId.GetValueOrDefault() > 0)
+                {
+                    attendances = attendances.Where(a => a.JobId == jobId.Value);
+                }
+                if (fromDate.HasValue)
+                {
+                    attendances = attendances.Where(a => a.EndDateTime >= fromDate.Value);
+                }
+                if (toDate.HasValue)
+                {
+                    toDate = toDate.Value.AddDays(1).AddSeconds(-1);
+                    attendances = attendances.Where(a => a.StartDateTime <= toDate.Value);
+                }
+                attendanceList = attendances.Include(a => a.Employee).Include(a => a.Job).ToList();
+            }
+
+            int brigadeId = Helpers.Brigade.CurrentBrigade().Value;
+
+            var employees = db.Employees.Where(e => e.BrigadeId == brigadeId).ToList();
+            employees.Insert(0, new Models.Employee());
+            ViewBag.Employees = new SelectList(employees, "Id", "Name");
+
+            var jobs = db.Jobs.Where(e => e.BrigadeId == brigadeId).ToList();
+            jobs.Insert(0, new Models.Job());
+            ViewBag.Jobs = new SelectList(jobs, "Id", "Description");
+
+            return View(attendanceList);
         }
 
         // GET: Attendance/Create

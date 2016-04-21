@@ -1,50 +1,122 @@
 ﻿@model IEnumerable<DavidsonRFB.Attendance.Web.Models.Attendance>
-
 @{
     ViewBag.Title = "Index";
 }
 
-<h2>Index</h2>
+<script type="text/javascript">
 
-<p>
-    @Html.ActionLink("Create New", "Create")
-</p>
-<table class="table">
-    <tr>
-        <th>
-            @Html.DisplayNameFor(model => model.Employee.Name)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.Job.Description)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.StartDateTime)
-        </th>
-        <th>
-            @Html.DisplayNameFor(model => model.EndDateTime)
-        </th>
-        <th></th>
-    </tr>
+    $(function () {
+        $(".datetimepicker").datetimepicker({
+            defaultDate: false,
+            format: 'YYYY-MM-DD'
+        });
+    });
 
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.Employee.Name)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Job.Description)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.StartDateTime)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.EndDateTime)
-        </td>
-        <td>
-            @Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.Id })
-        </td>
-    </tr>
-}
+    function searchAttendance() {
+        window.location.href = "@Url.Action("Index", "Attendance")?EmployeeId=" + $("#employeeId").val() + "&JobId=" + $("#jobId").val() + "&FromDate=" + $("#fromDate").val() + "&ToDate=" + $("#toDate").val();
+    }
 
-</table>
+    function resetAttendance() {
+        $("#employeeId").val(0);
+        $("#jobId").val(0);
+        $("#fromDate").val("");
+        $("#toDate").val("");
+    }
+
+</script>
+
+<h2>Attendance</h2>
+
+<div class="row" style="padding-top: 15px;">
+    <div class="well">
+        <table width="100%">
+            <tr>
+                <td style="padding: 5px;">@Html.Label("Employee", new { @class = "control-label" })</td>
+                <td style="padding: 5px;">@Html.DropDownList("employeeId", (SelectList)ViewBag.Employees, new { @class = "form-control" })</td>
+                <td>&nbsp;</td>
+                <td style="padding: 5px;">@Html.Label("From Date", new { @class = "control-label" })</td>
+                <td style="padding: 5px;"><div style="position: relative">@Html.TextBox("fromDate", null, new { @class = "form-control datetimepicker" })</div></td>
+            </tr>
+            <tr>
+                <td style="padding: 5px;">@Html.Label("Job", new { @class = "control-label" })</td>
+                <td style="padding: 5px;">@Html.DropDownList("jobId", (SelectList)ViewBag.Jobs, new { @class = "form-control" })</td>
+                <td>&nbsp;</td>
+                <td style="padding: 5px;">@Html.Label("To Date", new { @class = "control-label" })</td>
+                <td style="padding: 5px;"><div style="position: relative">@Html.TextBox("toDate", null, new { @class = "form-control datetimepicker" })</div></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td style="padding: 5px;" colspan="4">
+                    <a id="search" class="btn btn-primary" onclick="searchAttendance();">Search</a>
+                    <a id="reset" class="btn btn-default" onclick="resetAttendance();">Reset</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="row" style="padding-top: 30px;">
+    <p>
+        @Html.ActionLink("Create New", "Create")
+    </p>
+    <table class="table">
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Job.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StartDateTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EndDateTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalHours)
+            </th>
+            <th></th>
+        </tr>
+
+        @foreach (var item in Model)
+            {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Employee.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Job.Description)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.StartDateTime)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EndDateTime)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TotalHours)
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                </td>
+            </tr>
+        }
+
+        @if (Model.Any())
+        {
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>
+                    @{ var totalHours = @Model.Sum(m => m.TotalHours).ToString("N0"); }
+                    @Html.DisplayFor(model => totalHours)
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+        }
+    </table>
+</div>
