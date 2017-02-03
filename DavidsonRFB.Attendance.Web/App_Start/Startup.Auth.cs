@@ -12,7 +12,6 @@ using Microsoft.Owin.Security.OpenIdConnect;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Owin;
 using DavidsonRFB.Attendance.Web.Models;
-using DavidsonRFB.Attendance.Web.DAL;
 
 namespace DavidsonRFB.Attendance.Web
 {
@@ -31,7 +30,7 @@ namespace DavidsonRFB.Attendance.Web
 
         public void ConfigureAuth(IAppBuilder app)
         {
-            AttendanceContext db = new AttendanceContext();
+            ApplicationDbContext db = new ApplicationDbContext();
 
             app.SetDefaultSignInAsAuthenticationType(CookieAuthenticationDefaults.AuthenticationType);
 

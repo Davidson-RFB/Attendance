@@ -50,7 +50,7 @@ namespace DavidsonRFB.Attendance.Web.DAL
                 new Employee() { Id = 93247, Name = "Jason King", Brigade = context.Brigades.Single(b => b.Name == "Davidson RFB"), Email = "jason.king@davidsonrfb.org", Rank = context.Ranks.Single(r => r.Description == "Deputy Captain"), IsActive = true },
                 new Employee() { Id = 1234, Name = "Rolf Krolke", Brigade = context.Brigades.Single(b => b.Name == "Davidson RFB"), Email = "rolf.krolke@davidsonrfb.org", Rank = context.Ranks.Single(r => r.Description == "Deputy Group Captain"), IsActive = true },
                 new Employee() { Id = 105544, Name = "Blake Dutton", Brigade = context.Brigades.Single(b => b.Name == "Davidson RFB"), Email = "blake.dutton@davidsonrfb.org", Rank = context.Ranks.Single(r => r.Description == "Firefighter"), IsActive = true },
-                new Employee() { Id = 214874, Name = "James McCutcheon", Brigade = context.Brigades.Single(b => b.Name == "Davidson RFB"), Email = "jamesmccutcheon@davidsonrfb.org", Rank = context.Ranks.Single(r => r.Description == "Firefighter"), IsActive = true },
+                new Employee() { Id = 214874, Name = "James McCutcheon", Brigade = context.Brigades.Single(b => b.Name == "Davidson RFB"), Email = "james.mccutcheon@davidsonrfb.org", Rank = context.Ranks.Single(r => r.Description == "Firefighter"), IsActive = true },
                 new Employee() { Id = 95478, Name = "Tim Eliot", Brigade = context.Brigades.Single(b => b.Name == "Davidson RFB"), Email = "tim.eliot@davidsonrfb.org", Rank = context.Ranks.Single(r => r.Description == "Deputy Captain"), IsActive = true }
             };
             employees.ForEach(e => context.Employees.Add(e));
