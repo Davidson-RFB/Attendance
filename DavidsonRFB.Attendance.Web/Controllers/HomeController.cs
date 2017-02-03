@@ -9,7 +9,6 @@ using DavidsonRFB.Attendance.Web.Models;
 
 namespace DavidsonRFB.Attendance.Web.Controllers
 {
-    [Authorize]
     public class HomeController : Controller
     {
         private AttendanceContext context = new AttendanceContext();
@@ -51,7 +50,6 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                         JobId = attendees.JobId,
                         StartDateTime = DateTime.Now
                     });
-
                     ViewBag.Message = string.Format("{0} has been clocked in", context.Employees.Single(e => e.Id == attendees.EmployeeId).Name);
                 }
                 context.SaveChanges();

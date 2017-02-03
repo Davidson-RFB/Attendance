@@ -9,8 +9,6 @@ using DavidsonRFB.Attendance.Web.Models;
 namespace DavidsonRFB.Attendance.Web.Controllers
 {
     //[Authorize]
-    [Authorize]
-    //[Authorize]
     public class EmployeeController : Controller
     {
         private AttendanceContext context = new AttendanceContext();

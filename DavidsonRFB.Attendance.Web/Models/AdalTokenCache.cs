@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Linq;
-using System.Web;
 using System.Web.Security;
+using DavidsonRFB.Attendance.Web.DAL;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace DavidsonRFB.Attendance.Web.Models
 {
     public class ADALTokenCache : TokenCache
     {
-        private ApplicationDbContext db = new ApplicationDbContext();
+        private AttendanceContext db = new AttendanceContext();
         private string userId;
         private UserTokenCache Cache;
 
