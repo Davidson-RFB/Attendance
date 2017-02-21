@@ -39,16 +39,16 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                     toDate = toDate.Value.AddDays(1).AddSeconds(-1);
                     attendances = attendances.Where(a => a.StartDateTime <= toDate.Value);
                 }
-                attendanceList = attendances.Include(a => a.Employee).Include(a => a.Job).ToList();
+                attendanceList = attendances.Include(a => a.Employee).Include(a => a.Job).OrderByDescending(a => a.StartDateTime).ToList();
             }
 
             int brigadeId = Helpers.Brigade.CurrentBrigade().Value;
 
-            var employees = db.Employees.Where(e => e.BrigadeId == brigadeId).ToList();
+            var employees = db.Employees.Where(e => e.BrigadeId == brigadeId).OrderBy(e => e.Name).ToList();
             employees.Insert(0, new Models.Employee());
             ViewBag.Employees = new SelectList(employees, "Id", "Name");
 
-            var jobs = db.Jobs.Where(e => e.BrigadeId == brigadeId).ToList();
+            var jobs = db.Jobs.Where(e => e.BrigadeId == brigadeId).OrderBy(j => j.Description).ToList();
             jobs.Insert(0, new Models.Job());
             ViewBag.Jobs = new SelectList(jobs, "Id", "Description");
 
@@ -59,8 +59,8 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         public ActionResult Create()
         {
             int brigadeId = Helpers.Brigade.CurrentBrigade().Value;
-            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId), "Id", "Name");
-            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId), "Id", "Description");
+            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId).OrderBy(e => e.Name), "Id", "Name");
+            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description), "Id", "Description");
             return View();
         }
 
@@ -79,8 +79,8 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             }
 
             int brigadeId = Helpers.Brigade.CurrentBrigade().Value;
-            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId), "Id", "Name");
-            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId), "Id", "Description");
+            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId).OrderBy(e => e.Name), "Id", "Name");
+            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description), "Id", "Description");
             return View(attendance);
         }
 
@@ -99,8 +99,8 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             }
 
             int brigadeId = Helpers.Brigade.CurrentBrigade().Value;
-            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId), "Id", "Name");
-            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId), "Id", "Description");
+            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId).OrderBy(e => e.Name), "Id", "Name");
+            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description), "Id", "Description");
             return View(attendance);
         }
 
@@ -119,8 +119,8 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             }
 
             int brigadeId = Helpers.Brigade.CurrentBrigade().Value;
-            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId), "Id", "Name");
-            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId), "Id", "Description");
+            ViewBag.Employees = new SelectList(db.Employees.Where(e => e.BrigadeId == brigadeId).OrderBy(e => e.Name), "Id", "Name");
+            ViewBag.Jobs = new SelectList(db.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description), "Id", "Description");
             return View(attendance);
         }
 
