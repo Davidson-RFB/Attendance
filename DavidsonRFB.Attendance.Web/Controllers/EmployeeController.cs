@@ -8,7 +8,7 @@ using DavidsonRFB.Attendance.Web.Models;
 
 namespace DavidsonRFB.Attendance.Web.Controllers
 {
-    //[Authorize]
+    [Authorize]
     public class EmployeeController : Controller
     {
         private AttendanceContext context = new AttendanceContext();
@@ -18,14 +18,14 @@ namespace DavidsonRFB.Attendance.Web.Controllers
         {
             int? brigadeId = Helpers.Brigade.CurrentBrigade();
 
-            var employees = context.Employees.Where(e => e.BrigadeId == brigadeId).Include(e => e.Rank);
+            var employees = context.Employees.Where(e => e.BrigadeId == brigadeId).Include(e => e.Rank).OrderBy(e => e.Name);
             return View(employees.ToList());
         }
 
         // GET: Employee/Create
         public ActionResult Create()
         {
-            ViewBag.Ranks = new SelectList(context.Ranks, "Id", "Description");
+            ViewBag.Ranks = new SelectList(context.Ranks.OrderBy(r => r.Description), "Id", "Description");
             return View();
         }
 
@@ -44,7 +44,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                 return RedirectToAction("Index");
             }
 
-            ViewBag.Ranks = new SelectList(context.Ranks, "Id", "Description", employee.RankId);
+            ViewBag.Ranks = new SelectList(context.Ranks.OrderBy(r => r.Description), "Id", "Description", employee.RankId);
             return View(employee);
         }
 
@@ -64,7 +64,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                 return HttpNotFound();
             }
 
-            ViewBag.Ranks = new SelectList(context.Ranks, "Id", "Description", employee.RankId);
+            ViewBag.Ranks = new SelectList(context.Ranks.OrderBy(r => r.Description), "Id", "Description", employee.RankId);
             return View(employee);
         }
 
@@ -82,7 +82,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                 context.SaveChanges();
                 return RedirectToAction("Index");
             }
-            ViewBag.Ranks = new SelectList(context.Ranks, "Id", "Description", employee.RankId);
+            ViewBag.Ranks = new SelectList(context.Ranks.OrderBy(r => r.Description), "Id", "Description", employee.RankId);
             return View(employee);
         }
 
