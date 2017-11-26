@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace DavidsonRFB.Attendance.Web.Models
 {
@@ -58,6 +59,12 @@ namespace DavidsonRFB.Attendance.Web.Models
         [DataType(DataType.EmailAddress)]
         [Required]
         public string Email { get; set; }
+
+        [NotMapped]
+        public double WeekHrs
+        {
+            get { return Attendances.Where(a => a.StartDateTime > DateTime.Now.AddDays(-7)).Sum(a => a.TotalHours); }
+        }
 
         public virtual ICollection<Attendance> Attendances { get; set; }
     }

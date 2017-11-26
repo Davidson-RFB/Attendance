@@ -26,7 +26,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             var jobs = context.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description).ToList();
             jobs.Insert(0, new Job());
             ViewBag.Jobs = jobs;
-
+                       
             Response.AddHeader("Refresh", "600");
             return View(new Attendees() { CurrentAttendance = context.Attendances.Where(a => !a.EndDateTime.HasValue && a.Employee.BrigadeId == brigadeId).ToList() });
         }

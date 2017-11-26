@@ -15,7 +15,7 @@
 <div class="row" style="padding-top: 30px;">
     @using (Html.BeginForm("ClockOut", "Home", FormMethod.Post))
     {
-        <div class="col-md-7">
+        <div class="col-md-8">
             <div class="well">
                 <fieldset>
                     <legend>Current Attendance</legend>
@@ -27,6 +27,7 @@
                                     <th>@Html.CheckBox("selectAll")</th>
                                     <th>Name</th>
                                     <th>Rank</th>
+                                    <th>Week</th>
                                     <th>Job</th>
                                     <th>Started</th>
                                 </tr>
@@ -47,7 +48,7 @@
     }
     @using (Html.BeginForm("Index", "Home", FormMethod.Post))
     {
-        <div class="col-md-5">
+        <div class="col-md-4">
             <div class="well">
                 <fieldset>
                     <legend>Clock In</legend>

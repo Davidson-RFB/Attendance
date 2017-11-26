@@ -7,6 +7,17 @@
     </td>
     <td>@Html.DisplayFor(m => m.Employee.Name)</td>
     <td>@Html.DisplayFor(m => m.Employee.Rank.Description)</td>
+    <td>@Model.Employee.WeekHrs.ToString("F1")</td>
+
     <td>@Html.DisplayFor(m => m.Job.Description)</td>
-    <td>@Html.DisplayFor(m => m.StartDateTime, "ClockInDateTime")</td>
+    <td>
+    @if (Model.StartDateTime.ToShortDateString() == DateTime.Today.ToShortDateString()) 
+    {    
+        @Model.StartDateTime.ToString("h:mm tt")
+    }
+    else
+    {
+        @Model.StartDateTime.ToString("d MMM")
+    }
+    </td>
 </tr>
