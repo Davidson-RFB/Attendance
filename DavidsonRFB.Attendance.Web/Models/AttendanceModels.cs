@@ -63,7 +63,10 @@ namespace DavidsonRFB.Attendance.Web.Models
         [NotMapped]
         public double WeekHrs
         {
-            get { return Attendances.Where(a => a.StartDateTime > DateTime.Now.AddDays(-7)).Sum(a => a.TotalHours); }
+            get
+            {
+                return Attendances?.Where(a => a.StartDateTime > DateTime.Now.AddDays(-7)).Sum(a => a.TotalHours) ?? 0;
+            }
         }
 
         public virtual ICollection<Attendance> Attendances { get; set; }
