@@ -26,6 +26,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <WebProject_DirectoryAccessLevelKey>1</WebProject_DirectoryAccessLevelKey>
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -329,6 +330,7 @@
     <None Include="Properties\PublishProfiles\Amazon Web Services.pubxml" />
     <Content Include="Scripts\bootstrap-datetimepicker.js" />
     <Content Include="Scripts\bootstrap-datetimepicker.min.js" />
+    <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Include="Scripts\jquery-2.2.3.intellisense.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
@@ -357,6 +359,7 @@
     <Content Include="Views\Attendance\Edit.cshtml" />
     <Content Include="Views\Attendance\Index.cshtml" />
     <Content Include="Scripts\jquery-2.2.3.min.map" />
+    <Content Include="Views\Employee\Export.cshtml" />
     <None Include="Views\Shared\DisplayTemplates\ClockInDateTime.cshtml" />
     <Content Include="Views\Shared\EditorTemplates\Attendance.cshtml" />
     <Content Include="Views\UserProfile\Index.cshtml" />

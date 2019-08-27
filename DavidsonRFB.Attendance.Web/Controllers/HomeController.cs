@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
@@ -117,6 +118,34 @@ namespace DavidsonRFB.Attendance.Web.Controllers
             authCookie.Expires = DateTime.Now;
             ControllerContext.HttpContext.Response.Cookies.Add(authCookie);
             return RedirectToAction("Index", "Home");
+        }
+
+        public MvcHtmlString Exporter()
+        {
+            int? brigadeId = Helpers.Brigade.CurrentBrigade();
+
+            var result = new StringBuilder();
+
+            foreach (var rank in context.Ranks)
+            {
+                result.AppendFormat("insert into rank (id, description, isactive) values ({0}, '{1}', {2}, )</br>", rank.Id, rank.Description, rank.IsActive);
+            }
+
+            result.Append("</br>");
+
+            foreach (var job in context.Jobs)
+            {
+                result.AppendFormat("insert into job (id, brigadeid, description, isactive) values ({0}, {1}, '{2}', {3})</br>", job.Id, job.BrigadeId, job.Description, job.IsActive);
+            }
+
+            result.Append("</br>");
+
+            foreach (var attendance in context.Attendances)
+            {
+                result.AppendFormat("insert into attendance (id, jobid, employeeid, startdatetime, enddatetime) values ({0}, {1}, {2}, {3}, {4})</br>", attendance.Id, attendance.JobId, attendance.EmployeeId, attendance.StartDateTime, attendance.EndDateTime);
+            }
+
+            return new MvcHtmlString(result.ToString());
         }
     }
 }
