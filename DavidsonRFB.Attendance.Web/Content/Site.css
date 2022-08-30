@@ -1,4 +1,11 @@
 ﻿body {
+    background-image: url('images/Region_North_2018_SQ_PR-photoshop_new-min.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: center;
+    color: #333;
+    font-family: 'Montserrat', sans-serif;
     padding-top: 50px;
     padding-bottom: 20px;
 }
@@ -7,6 +14,32 @@
 .body-content {
     padding-left: 15px;
     padding-right: 15px;
+}
+
+h2:not([class]),
+h3:not([class]),
+h4:not([class]),
+h5:not([class]),
+h6:not([class]) {
+    font-family: 'Montserrat', sans-serif;
+}
+
+a:visited,
+:visited:active,
+:visited:focus,
+:visited:hover,
+:visited {
+    color: #e5281B;
+}
+
+    a:visited:before,
+    a:before {
+        background-color: #e5281B;
+    }
+
+a {
+    color: #e5281B;
+    font-weight: normal;
 }
 
 /* Override the default bootstrap behavior where horizontal description lists 
@@ -21,4 +54,39 @@ input,
 select,
 textarea {
     max-width: 280px;
+}
+
+/* Some overrides to make the site look more RFS-y */
+.navbar-inverse {
+    background-color: #e5281B;
+    text-decoration-color: #000;
+    text-transform: uppercase;
+}
+
+  .navbar-inverse .navbar-brand {
+    color: #ffffff;
+   }
+
+    .navbar-inverse .navbar-nav > li > a {
+        color: #ffffff;
+    } 
+    
+  .navbar-inverse .navbar-nav .open .dropdown-menu > li > a {
+    color: #ffffff;
+  }
+
+.well {
+  background-color: #ffffff;
+}
+
+legend {
+  /*color: #e5281B;*/
+  border-bottom: none;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #e5281B;
+    border-color: #e5281B;
+    text-transform: uppercase;
 }
