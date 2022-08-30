@@ -53,8 +53,8 @@ namespace DavidsonRFB.Attendance.Web
                             ClientCredential credential = new ClientCredential(clientId, appKey);
                             string signedInUserID = context.AuthenticationTicket.Identity.FindFirst(ClaimTypes.NameIdentifier).Value;
                             AuthenticationContext authContext = new AuthenticationContext(Authority, new ADALTokenCache(signedInUserID));
-                            AuthenticationResult result = authContext.AcquireTokenByAuthorizationCode(
-                            code, new Uri(HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Path)), credential, graphResourceId);
+                            AuthenticationResult result = authContext.AcquireTokenByAuthorizationCodeAsync(
+                            code, new Uri(HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Path)), credential, graphResourceId).Result;
 
                             return Task.FromResult(0);
                         }
