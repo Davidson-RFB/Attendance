@@ -3,8 +3,6 @@ name: .NET
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
   build:
@@ -24,4 +22,5 @@ jobs:
       run: nuget restore DavidsonRFB.Attendance.sln
 
     - name: Build solution
-      run: msbuild DavidsonRFB.Attendance.sln -t:rebuild -property:Configuration=Release
+      run: msbuild DavidsonRFB.Attendance.sln /p:DeployOnBuild=true /p:DeployDefaultTarget=WebPublish /p:WebPublishMethod=FileSystem /p:DeleteExistingFiles=True /p:Platform="Any CPU" /p:Configuration="Release" /p:PublishUrl="../_build"
+        
