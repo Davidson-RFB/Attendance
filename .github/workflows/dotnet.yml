@@ -21,7 +21,7 @@ jobs:
       uses: NuGet/setup-nuget@v1.0.5
 
     - name: Restore Packages
-      run: nuget restore MySolution.sln
+      run: nuget restore DavidsonRFB.Attendance.sln
 
     - name: Build solution
-      run: msbuild MySolution.sln -t:rebuild -property:Configuration=Release
+      run: msbuild DavidsonRFB.Attendance.sln -t:rebuild -property:Configuration=Release
