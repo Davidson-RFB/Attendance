@@ -429,7 +429,6 @@
     <Content Include="Views\Attendance\Delete.cshtml" />
     <Content Include="Views\Attendance\Edit.cshtml" />
     <Content Include="Views\Attendance\Index.cshtml" />
-    <Content Include="Views\Employee\Export.cshtml" />
     <Content Include="Scripts\jquery-3.6.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.6.0.min.map" />
     <Content Include="Scripts\moment.min.js.map" />
