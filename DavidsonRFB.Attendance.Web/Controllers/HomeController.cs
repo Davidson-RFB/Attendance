@@ -100,7 +100,6 @@ namespace DavidsonRFB.Attendance.Web.Controllers
                     true,                          // persistent?
                     "Log Time"                     // can be used to store roles
                     );
-
                 string encryptedTicket = FormsAuthentication.Encrypt(authTicket);
                 var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
                 authCookie.Expires = authTicket.Expiration;

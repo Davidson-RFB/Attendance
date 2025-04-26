@@ -90,3 +90,12 @@ legend {
     border-color: #e5281B;
     text-transform: uppercase;
 }
+
+.dropdown-menu > li > a:hover {
+    background-image: none;
+    background-color: #e65a51
+}
+
+.card {
+    background-color: white
+}

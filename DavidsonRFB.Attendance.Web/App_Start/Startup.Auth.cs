@@ -43,6 +43,7 @@ namespace DavidsonRFB.Attendance.Web
                     ClientId = clientId,
                     Authority = Authority,
                     PostLogoutRedirectUri = postLogoutRedirectUri,
+                    RedirectUri = "https://localhost:44321/signin-oidc",
 
                     Notifications = new OpenIdConnectAuthenticationNotifications()
                     {
