@@ -2,7 +2,7 @@
 
 **Status:** In progress
 **Branch:** `update-and-prep-for-prod`
-**Last updated:** Phase 0 complete
+**Last updated:** Phase 1 complete
 
 > **For future agents / anyone resuming this work:** Read this document in full before making changes. It is the single source of truth for scope, locked-in architecture decisions, and what has/hasn't been done yet. Update the "Phase Status" and "Decisions Log" sections after completing any phase, even a partial one. If the session is interrupted mid-phase, leave a note under that phase describing exactly what's done and what's left.
 
@@ -128,9 +128,18 @@ Update the status line and add notes under each phase as work happens.
 - Docker image build context is the **repo root** (not the project folder), so the `Dockerfile` can `COPY` the solution file and both project folders for restore; `docker-compose.yml`'s `build.context` reflects this.
 
 ### Phase 1 — Data layer
-**Status:** Not started
-**Deliverables:** Port `Models/AttendanceModels.cs`, `DAL/AttendanceContext.cs`, `DAL/AttendanceInitializer.cs` (repurposed as local-dev-only seed, never run against prod) to EF6-on-net10. Confirm ADO.NET provider (`Microsoft.Data.SqlClient`) works with EF6's SQL Server provider on Linux. Switch connection strings to SQL auth. Produce a plain SQL schema script for the docker-compose seed DB matching production schema exactly.
-**Notes:** —
+**Status:** ✅ Done
+**Deliverables:** Port `Models/AttendanceModels.cs`, `DAL/AttendanceContext.cs`, `DAL/AttendanceInitializer.cs` (repurposed as local-dev-only seed, never run against prod) to EF6-on-net10. Confirm ADO.NET provider works with EF6's SQL Server provider on Linux. Switch connection strings to SQL auth. Produce a plain SQL schema script for the docker-compose seed DB matching production schema exactly.
+**Notes:**
+- **`Models/AttendanceModels.cs` and `DAL/AttendanceContext.cs` are ported byte-for-byte in behavior** (only `#nullable disable` added, since these are EF6 POCOs never written against nullable reference types, plus doc comments). No logic changes, including the known `DateTime.Now`-based `WeekHrs`/`TotalHours` computed properties - not in scope here, not touched.
+- **ADO.NET provider decision (deviates from the original Phase-planning assumption of `Microsoft.Data.SqlClient`):** used `System.Data.SqlClient` instead. Reasoning: EF6's `System.Data.Entity.SqlServer.SqlProviderServices` is built around the classic `System.Data.SqlClient` provider; that combination is the documented, low-risk path for "EF6 without a Framework/app.config host" (see `EntityFramework` NuGet package's own transitive dependency - installing `EntityFramework` 6.5.2 pulls in `System.Data.SqlClient` 4.8.6 automatically). `System.Data.SqlClient` is in maintenance mode but fully functional on Linux (verified below). Revisit only if `System.Data.SqlClient` support actually gets pulled by Microsoft - not currently a concern.
+- **EF6-without-app.config wiring** (this doesn't exist in any Microsoft doc as a clean recipe - assembled from EF6 source behavior): a `[DbConfigurationType(typeof(AttendanceDbConfiguration))]`-decorated `AttendanceContext`, where `AttendanceDbConfiguration : DbConfiguration` explicitly calls `SetProviderServices`/`SetProviderFactory`/`SetDefaultConnectionFactory` in its constructor (replacing the old `<entityFramework><providers>` Web.config section). Additionally, `Program.cs` must call `System.Data.Common.DbProviderFactories.RegisterFactory("System.Data.SqlClient", SqlClientFactory.Instance)` at startup, since .NET (Core)/.NET 5+ doesn't populate `DbProviderFactories` from machine.config the way .NET Framework does.
+  - **Gotcha hit and fixed:** `Database.SetInitializer<AttendanceContext>(null)` must NOT be called from inside `AttendanceDbConfiguration`'s constructor - doing so re-enters `DbConfigurationManager` while it's still being constructed and throws `InvalidOperationException: ValueFactory attempted to access the Value property of this instance`. It's called from `Program.cs` instead, after the provider registration, before any `AttendanceContext` is constructed.
+- **Connection string handling:** EF6's classic `base("AttendanceContext")` constructor (resolving a *name* against `<connectionStrings>` in Web.config) has no equivalent in ASP.NET Core. `AttendanceContext` now takes the connection string *value* directly via its constructor; `Program.cs` registers it in DI as `AddScoped(...)`, resolving the value from `IConfiguration.GetConnectionString("AttendanceContext")` (i.e. `appsettings.json` / `ConnectionStrings__AttendanceContext` env var / user secrets), throwing a clear `InvalidOperationException` at first use if it's unset.
+- **`DAL/AttendanceInitializer.cs` was NOT ported as a C# class.** Its job (seed data for a fresh DB) is superseded by plain SQL scripts (`db/seed/01-schema.sql`, `db/seed/02-seed-data.sql`) run by a new `db-init` one-shot service in `docker-compose.yml` (`db/init-db.sh`) - the `mssql/server` image has no built-in `docker-entrypoint-initdb.d` support like postgres/mysql images do, hence the custom wait-then-`sqlcmd` script. This keeps EF6 completely out of schema/seed responsibilities in every environment (dev and prod alike), consistent with "the app must never attempt schema changes against a real DB."
+- **Schema caveat (flagged for Phase 8):** `db/seed/01-schema.sql` is a best-effort reconstruction of the production schema derived purely from the EF6 model's conventions (no access to the real prod DB during this migration). Table/column nullability and types (e.g. `NVARCHAR(MAX)`, `DATETIME`) follow EF6 defaults for the annotations present on each property. **This must be diffed against the real production schema before cutover** - added to the Open Questions list below.
+- **Verified for real, not just "should work":** stood up a disposable SQL Server 2022 Linux container, applied `db/seed/*.sql` against it, then ran a throwaway console app referencing the new `AttendanceContext` (net10.0) that: queried `Employees`/`Brigades` via LINQ, inserted a new `Attendance` row via `SaveChanges()`, and re-queried `WeekHrs`/`TotalHours` (the ported computed properties) via `.Include()` - all correct. This is real proof EF6 6.5.2 works end-to-end on .NET 10 on Linux, not just "the packages restored."
+- `dotnet build`/`dotnet test` both still pass after these changes.
 
 ### Phase 2 — Authentication
 **Status:** Not started
@@ -176,6 +185,9 @@ Chronological record of decisions made during implementation that aren't already
 - **Phase 0:** Old Framework 4.8 codebase moved wholesale to `legacy/` (via `git mv`, history preserved) rather than transformed in place, to avoid SDK-style implicit-glob build breakage while porting incrementally. `legacy/` is excluded from Docker build context and the active solution; deleted at Phase 8 cutover.
 - **Phase 0:** Solution file is `DavidsonRFB.Attendance.slnx` (new XML format, .NET 10 SDK default), not classic `.sln`.
 - **Phase 0:** New projects scaffolded via `dotnet new mvc`/`dotnet new xunit` then customized, rather than hand-authored from scratch.
+- **Phase 1:** ADO.NET provider is `System.Data.SqlClient`, not `Microsoft.Data.SqlClient` - required for EF6's `SqlProviderServices` to work cleanly; see Phase 1 notes for the full reasoning.
+- **Phase 1:** `AttendanceInitializer.cs` was not ported as C# - replaced by `db/seed/*.sql` + a `db-init` docker-compose service, keeping EF6 fully out of schema/seed duties in all environments.
+- **Phase 1:** Connection string is passed as a literal value to `AttendanceContext`'s constructor (resolved from `IConfiguration` in `Program.cs`), not a config-section name lookup like the original `base("AttendanceContext")` - `<connectionStrings>`/`ConfigurationManager` don't exist in ASP.NET Core.
 
 ---
 
@@ -184,3 +196,4 @@ Chronological record of decisions made during implementation that aren't already
 - Exact Azure Container Registry name / resource group / Azure Web App name for this project (not yet created/confirmed).
 - Whether the existing production SQL Server will get a new SQL login created for this app, or reuse an existing one.
 - Final decommission timeline for the old Framework-based deployment(s) once cutover is validated.
+- **`db/seed/01-schema.sql` has not been validated against the real production schema** (no DB access during this migration session) - it's reconstructed from the EF6 model's conventions only. Before cutover (Phase 8), diff this script's tables/columns/types against the actual production database and correct any discrepancies (nullable columns, exact data types, missing indexes/constraints, etc.) - this is the single biggest risk to "100% database parity."

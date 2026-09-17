@@ -15,12 +15,12 @@ services:
       # Matches the throwaway 'db' service credentials below.
       - ConnectionStrings__AttendanceContext=Server=db;Database=Attendance;User Id=sa;Password=LocalDev_Passw0rd!;TrustServerCertificate=True
     depends_on:
-      db:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
 
-  # Disposable local SQL Server instance. Schema is seeded from
-  # db/seed/ (added in Phase 1) to match production schema exactly - this
-  # container holds no real data and can be wiped at any time.
+  # Disposable local SQL Server instance. Schema/data is seeded by db-init
+  # from db/seed/*.sql - this container holds no real data and can be wiped
+  # at any time (docker compose down -v).
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
@@ -30,7 +30,6 @@ services:
       - "1433:1433"
     volumes:
       - attendance-db-data:/var/opt/mssql
-      # - ./db/seed:/docker-entrypoint-initdb.d  # wired up in Phase 1
     healthcheck:
       test:
         [
@@ -40,6 +39,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # One-shot: waits for 'db', creates the Attendance database if missing, and
+  # applies db/seed/*.sql in order (mssql/server has no built-in
+  # docker-entrypoint-initdb.d support, unlike postgres/mysql images).
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - MSSQL_SA_PASSWORD=LocalDev_Passw0rd!
+    volumes:
+      - ./db/seed:/seed:ro
+      - ./db/init-db.sh:/init-db.sh:ro
+    entrypoint: ["/bin/bash", "/init-db.sh"]
 
 volumes:
   attendance-db-data:
