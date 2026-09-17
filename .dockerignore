@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+legacy/
+.git/
+.github/
+docs/
+*.md

@@ -2,7 +2,7 @@
 
 **Status:** In progress
 **Branch:** `update-and-prep-for-prod`
-**Last updated:** Phase 0 kickoff
+**Last updated:** Phase 0 complete
 
 > **For future agents / anyone resuming this work:** Read this document in full before making changes. It is the single source of truth for scope, locked-in architecture decisions, and what has/hasn't been done yet. Update the "Phase Status" and "Decisions Log" sections after completing any phase, even a partial one. If the session is interrupted mid-phase, leave a note under that phase describing exactly what's done and what's left.
 
@@ -115,9 +115,17 @@ This is a cleaner, more idiomatic mechanism than the old manual `FormsAuthentica
 Update the status line and add notes under each phase as work happens.
 
 ### Phase 0 — Scaffolding
-**Status:** In Progress
+**Status:** ✅ Done
 **Deliverables:** New SDK-style `.csproj`s (web + tests), `Program.cs` skeleton, `appsettings.json`/`appsettings.Development.json`, `Dockerfile` (multi-stage), `docker-compose.yml` (app + SQL Server Linux container), `.dockerignore`. Remove `packages.config`, old `App_Start/*`, `Global.asax*`.
-**Notes:** —
+**Notes:**
+- **Structural approach:** the entire old Framework 4.8 codebase was moved to `legacy/DavidsonRFB.Attendance.Web/` and `legacy/DavidsonRFB.Attendance.Web.Tests/` (via `git mv`, so history is preserved) rather than trying to transform the existing project folders in place. Reasoning: SDK-style projects use implicit file globbing, so leaving old `System.Web.Mvc`-based `.cs`/`.cshtml` files in the new project directories would break the build immediately. Keeping `legacy/` around lets later phases port logic from a working reference until cutover (Phase 8), at which point `legacy/` is deleted entirely. **`legacy/` is excluded from the Docker build context (`.dockerignore`) and is not part of the active solution** — it's reference-only, not built by CI.
+- New `DavidsonRFB.Attendance.Web/` and `DavidsonRFB.Attendance.Web.Tests/` were scaffolded via `dotnet new mvc`/`dotnet new xunit` (net10.0) rather than hand-written from scratch, to get a known-good, idiomatic starting skeleton (correct `Program.cs` wiring, `appsettings.json` layout, etc.) which was then customized.
+- **Solution file format:** `dotnet new sln` on the .NET 10 SDK defaults to the new `.slnx` (XML) format, not the classic `.sln`. Went with it (`DavidsonRFB.Attendance.slnx`) rather than forcing the legacy format — it's fully supported by `dotnet build`/CI and is simpler. Anything referencing "the solution file" from here on means `DavidsonRFB.Attendance.slnx`, not `.sln`.
+- `appsettings.json` has placeholder sections stubbed in for `ConnectionStrings:AttendanceContext`, `AzureAd` (for `Microsoft.Identity.Web`, wired in Phase 2), and `ApplicationInsights` (wired in Phase 5) — all empty, **no real secrets committed**. `appsettings.Development.json` has a real (but throwaway, local-only) SQL auth connection string matching the `docker-compose.yml` `db` service's SA password, since that's not a secret worth protecting.
+- Template's default `wwwroot/lib/*` (libman-fetched bootstrap/jquery/jquery-validation) was deleted — Phase 4 will bring in our own already-vendored, already-minified assets from `legacy/.../Content` and `legacy/.../Scripts` instead of re-fetching different versions via libman.
+- The template's placeholder `HomeController`/`Views/Home/{Index,Privacy}.cshtml`/`Views/Shared/Error.cshtml` are still the generic scaffolded ones (not yet the real app) — these get replaced with the ported versions in Phase 3. Right now the app is a "does it boot and serve a 200" skeleton, not yet functional Attendance app.
+- **Verified:** `dotnet build DavidsonRFB.Attendance.slnx` succeeds (0 warnings/errors); `dotnet run` serves HTTP 200 on `/`; `docker build` against `DavidsonRFB.Attendance.Web/Dockerfile` succeeds and the resulting container serves HTTP 200 on port 8080. A Data Protection warning about non-persisted keys appears in the container logs as expected — this is exactly the concern Phase 2 addresses (key ring needs to be persisted to a mounted volume for the Kiosk cookie to survive container restarts).
+- Docker image build context is the **repo root** (not the project folder), so the `Dockerfile` can `COPY` the solution file and both project folders for restore; `docker-compose.yml`'s `build.context` reflects this.
 
 ### Phase 1 — Data layer
 **Status:** Not started
@@ -165,7 +173,9 @@ Update the status line and add notes under each phase as work happens.
 
 Chronological record of decisions made during implementation that aren't already captured above (e.g. specific package versions chosen, deviations discovered mid-phase, etc.). Add an entry whenever a non-trivial implementation choice is made that a future agent would need to know about.
 
-- *(none yet — add entries here as phases progress)*
+- **Phase 0:** Old Framework 4.8 codebase moved wholesale to `legacy/` (via `git mv`, history preserved) rather than transformed in place, to avoid SDK-style implicit-glob build breakage while porting incrementally. `legacy/` is excluded from Docker build context and the active solution; deleted at Phase 8 cutover.
+- **Phase 0:** Solution file is `DavidsonRFB.Attendance.slnx` (new XML format, .NET 10 SDK default), not classic `.sln`.
+- **Phase 0:** New projects scaffolded via `dotnet new mvc`/`dotnet new xunit` then customized, rather than hand-authored from scratch.
 
 ---
 

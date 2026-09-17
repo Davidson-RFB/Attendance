@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DavidsonRFB.Attendance.Web.Tests/DavidsonRFB.Attendance.Web.Tests.csproj" />
+  <Project Path="DavidsonRFB.Attendance.Web/DavidsonRFB.Attendance.Web.csproj" />
+</Solution>
