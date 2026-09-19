@@ -243,3 +243,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+# ASP.NET Core Data Protection keys (local dev only - see appsettings.Development.json)
+.dataprotection-keys/

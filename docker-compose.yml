@@ -14,6 +14,18 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       # Matches the throwaway 'db' service credentials below.
       - ConnectionStrings__AttendanceContext=Server=db;Database=Attendance;User Id=sa;Password=LocalDev_Passw0rd!;TrustServerCertificate=True
+      # Overrides appsettings.Development.json's local-folder default so the
+      # Kiosk cookie's Data Protection keys survive `docker compose restart`/
+      # rebuilds of the web container (not just process restarts).
+      - DataProtection__KeyRingPath=/keys
+      # Dummy values so Microsoft.Identity.Web can start up (constructs the
+      # AAD authorize-endpoint URL etc.) without a real tenant registered yet.
+      # Replace with real values via .env / a real appsettings override to
+      # actually complete a sign-in - see Phase 8.
+      - AzureAd__TenantId=00000000-0000-0000-0000-000000000000
+      - AzureAd__ClientId=00000000-0000-0000-0000-000000000000
+    volumes:
+      - attendance-dataprotection-keys:/keys
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -57,3 +69,4 @@ services:
 
 volumes:
   attendance-db-data:
+  attendance-dataprotection-keys:

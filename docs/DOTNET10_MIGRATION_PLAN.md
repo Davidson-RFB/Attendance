@@ -2,7 +2,7 @@
 
 **Status:** In progress
 **Branch:** `update-and-prep-for-prod`
-**Last updated:** Phase 1 complete
+**Last updated:** Phase 2 complete
 
 > **For future agents / anyone resuming this work:** Read this document in full before making changes. It is the single source of truth for scope, locked-in architecture decisions, and what has/hasn't been done yet. Update the "Phase Status" and "Decisions Log" sections after completing any phase, even a partial one. If the session is interrupted mid-phase, leave a note under that phase describing exactly what's done and what's left.
 
@@ -142,9 +142,23 @@ Update the status line and add notes under each phase as work happens.
 - `dotnet build`/`dotnet test` both still pass after these changes.
 
 ### Phase 2 — Authentication
-**Status:** Not started
+**Status:** ✅ Done
 **Deliverables:** `Microsoft.Identity.Web` AAD wiring; `"Kiosk"` cookie scheme with Data Protection key persistence to a mounted volume; ported `CreateCookie`/`RemoveCookie`; replacement for `LocalAuthorizationFilter`/`Helpers/Brigade.cs` per section 4.
-**Notes:** —
+**Notes:**
+- **Scheme naming, mapped onto real Microsoft.Identity.Web/ASP.NET Core constants** (the plan doc's section 4 used a placeholder name "AzureAD" when this was originally designed - the actual scheme name is `CookieAuthenticationDefaults.AuthenticationScheme` = `"Cookies"`, registered by `AddMicrosoftIdentityWebApp`, which holds the AAD session after a successful OIDC sign-in; `"OpenIdConnect"` is the separate challenge-only scheme that redirects to Entra ID). `Auth/KioskAuthentication.cs` defines `HomeAndKioskSchemes = "Kiosk,Cookies"` as the combined list used on `[Authorize(AuthenticationSchemes = ...)]`.
+- **`Home/Index` now carries `[Authorize(AuthenticationSchemes = KioskAuthentication.HomeAndKioskSchemes)]`** even though Index's *body* is still the Phase 0 placeholder - the auth gate is genuinely final/Phase-2-complete; Phase 3 only needs to replace the view/logic, not touch the attribute. `ClockOut` will need the same attribute once it exists in Phase 3.
+- **Real bug caught and fixed via live testing:** naming both `"Kiosk"` and `"Cookies"` in `AuthenticationSchemes` means ASP.NET Core challenges **both by name** when neither authenticates. The `"Cookies"` scheme, if not explicitly configured, has its own default (unconfigured) `LoginPath` ("/Account/Login", which doesn't exist in this app) and was clobbering the correct AAD redirect that the Kiosk scheme's own `OnRedirectToLogin` had already set up. Fixed by also configuring `CookieAuthenticationOptions.Events.OnRedirectToLogin` (via `services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, ...)`) to forward to the OpenIdConnect challenge, same as the Kiosk scheme does. Caught by literally running the app and curling `/` unauthenticated - it redirected to a dead `/Account/Login` path before the fix.
+- **`CreateCookie` resolves the signed-in user's email via the `preferred_username` claim** (falling back to `User.Identity.Name`), not `User.Identity.Name` alone like the original app - `preferred_username` is the reliable AAD v2/Microsoft.Identity.Web claim for the user's UPN/email; relying on `Identity.Name`'s mapping alone was a known fragility point in the old ADAL/JWT stack (claim-type-mapping behavior changes across major library versions) that this migration deliberately avoids repeating.
+- **`Helpers/Brigade.cs` replaced by `Helpers/CurrentBrigade.cs`** - a static method taking `(ClaimsPrincipal user, AttendanceContext db)` explicitly instead of reading `HttpContext.Current`/`Request.Cookies` (which don't exist in ASP.NET Core). Checks the Kiosk cookie's `davidsonrfb:brigade_id` claim first (kiosk session, no employee lookup needed/possible), then falls back to looking up the AAD-authenticated employee's `BrigadeId` by email - same precedence as the original.
+- **Data Protection key persistence** is config-driven (`DataProtection:KeyRingPath`): unset in base `appsettings.json`'s committed value is `/keys` (the Docker container path, backed by a new named volume `attendance-dataprotection-keys` in `docker-compose.yml`); `appsettings.Development.json` overrides it to a local `.dataprotection-keys/` folder for plain `dotnet run` outside Docker (gitignored). `docker-compose.yml`'s `web` service explicitly sets `DataProtection__KeyRingPath=/keys` as an env var so the Development-environment override inside the container doesn't win over the mounted volume path.
+- `docker-compose.yml`'s `web` service also gained dummy `AzureAd__TenantId`/`AzureAd__ClientId` env vars so the stack boots without crashing before real AAD app registration values exist - these are placeholder GUIDs, not secrets, and must be replaced with real values (via `.env`/secrets) before real sign-in will work. Flagged in Open Questions.
+- **Verified for real, end-to-end, against live infrastructure (not just "should work"):**
+  - `dotnet run` locally with a real, public AAD tenant alias (`common`) and a dummy client id: unauthenticated `GET /Home/CreateCookie` correctly 302-redirects to a genuine, fully-formed `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?...` URL (proves the AAD-only challenge path end-to-end).
+  - Unauthenticated `GET /` (Index, multi-scheme `Kiosk,Cookies`) - reproduced the clobbering bug above, fixed it, then reverified it now correctly redirects to the same genuine AAD authorize URL instead of the dead `/Account/Login` path.
+  - Rebuilt the actual Docker image and re-ran the same unauthenticated `GET /` check against the container (with `/keys` as the mounted key path) - same correct redirect, and the Data Protection "keys may not persist" warning from Phase 0 is gone (confirming the key-path wiring works).
+  - `Helpers/CurrentBrigade.Resolve` verified directly (no HTTP needed) with a hand-built Kiosk-scheme `ClaimsPrincipal` (returns the claimed brigade id, no DB access attempted) and an anonymous principal (returns `null`, no exception).
+  - **Not yet verified (deferred to Phase 8, requires a real AAD app registration):** a full real sign-in round trip, `CreateCookie` actually minting a working Kiosk cookie, and a subsequent request succeeding via that cookie alone. The mechanics (`HttpContext.SignInAsync`/cookie auth) are standard, well-trodden ASP.NET Core APIs, but this hasn't been exercised against a real identity provider in this session.
+- `dotnet build`/`dotnet test` both pass; Docker image builds and runs correctly.
 
 ### Phase 3 — Controllers & views
 **Status:** Not started
@@ -188,6 +202,9 @@ Chronological record of decisions made during implementation that aren't already
 - **Phase 1:** ADO.NET provider is `System.Data.SqlClient`, not `Microsoft.Data.SqlClient` - required for EF6's `SqlProviderServices` to work cleanly; see Phase 1 notes for the full reasoning.
 - **Phase 1:** `AttendanceInitializer.cs` was not ported as C# - replaced by `db/seed/*.sql` + a `db-init` docker-compose service, keeping EF6 fully out of schema/seed duties in all environments.
 - **Phase 1:** Connection string is passed as a literal value to `AttendanceContext`'s constructor (resolved from `IConfiguration` in `Program.cs`), not a config-section name lookup like the original `base("AttendanceContext")` - `<connectionStrings>`/`ConfigurationManager` don't exist in ASP.NET Core.
+- **Phase 2:** The AAD session scheme is literally named `"Cookies"` (`CookieAuthenticationDefaults.AuthenticationScheme`, registered by `AddMicrosoftIdentityWebApp`), not `"AzureAD"` as originally sketched in section 4 - `Auth/KioskAuthentication.HomeAndKioskSchemes` is the source of truth for the actual combined scheme string used on `[Authorize]`.
+- **Phase 2:** Both the `"Kiosk"` and `"Cookies"` schemes need their `Events.OnRedirectToLogin` explicitly forwarded to an `OpenIdConnect` challenge - naming a cookie scheme directly in a multi-scheme `[Authorize(AuthenticationSchemes = ...)]` causes ASP.NET Core to challenge it directly by name, bypassing the "default challenge scheme" convention that normally handles this automatically for plain `[Authorize]`. Found and fixed via live testing, not by inspection.
+- **Phase 2:** `CreateCookie` resolves the signed-in user's identity via the `preferred_username` claim (falling back to `Identity.Name`), not `Identity.Name` alone, to avoid the claim-type-mapping fragility that affected the old ADAL/JWT stack.
 
 ---
 
@@ -197,3 +214,5 @@ Chronological record of decisions made during implementation that aren't already
 - Whether the existing production SQL Server will get a new SQL login created for this app, or reuse an existing one.
 - Final decommission timeline for the old Framework-based deployment(s) once cutover is validated.
 - **`db/seed/01-schema.sql` has not been validated against the real production schema** (no DB access during this migration session) - it's reconstructed from the EF6 model's conventions only. Before cutover (Phase 8), diff this script's tables/columns/types against the actual production database and correct any discrepancies (nullable columns, exact data types, missing indexes/constraints, etc.) - this is the single biggest risk to "100% database parity."
+- **No real Entra ID (AAD) app registration exists yet for the new app.** Should this reuse the existing `ida:ClientId`/tenant from the legacy app's `Web.config` (same tenant `74023b68-c430-409d-a0c0-76548ddc20b1`), or should a fresh app registration be created for the new .NET 10 app (recommended, since the redirect URIs/callback paths will differ from the old `https://localhost:44321/signin-oidc` mess)? Needed before Phase 8's real sign-in validation can happen.
+- A full real AAD sign-in → `CreateCookie` → Kiosk-cookie-only-request round trip has not been exercised against a live tenant (only the challenge/redirect half has been verified for real - see Phase 2 notes). Do this as part of Phase 8.
