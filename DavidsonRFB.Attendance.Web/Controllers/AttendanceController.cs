@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using DavidsonRFB.Attendance.Web.Auth;
 using DavidsonRFB.Attendance.Web.DAL;
 using DavidsonRFB.Attendance.Web.Helpers;
 
@@ -12,7 +13,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers;
 /// Attendance record maintenance (search/create/edit/delete) - AAD-only,
 /// ported near-verbatim from the legacy AttendanceController.
 /// </summary>
-[Authorize]
+[Authorize(AuthenticationSchemes = KioskAuthentication.AadOnlyScheme)]
 public class AttendanceController : Controller
 {
     private readonly AttendanceContext _db;

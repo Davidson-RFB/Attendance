@@ -113,7 +113,7 @@ public class HomeController : Controller
     // the signed-in AAD user's brigade. Strictly AAD-only - see the design
     // intent in docs/DOTNET10_MIGRATION_PLAN.md section 4. This must never
     // be relaxed to allow anonymous/Kiosk-cookie access.
-    [Authorize]
+    [Authorize(AuthenticationSchemes = KioskAuthentication.AadOnlyScheme)]
     public async Task<IActionResult> CreateCookie()
     {
         var email = User.FindFirst("preferred_username")?.Value ?? User.Identity?.Name;
@@ -143,7 +143,7 @@ public class HomeController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = KioskAuthentication.AadOnlyScheme)]
     public async Task<IActionResult> RemoveCookie()
     {
         await HttpContext.SignOutAsync(KioskAuthentication.Scheme);

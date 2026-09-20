@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using DavidsonRFB.Attendance.Web.Auth;
 using DavidsonRFB.Attendance.Web.DAL;
 using DavidsonRFB.Attendance.Web.Helpers;
 using DavidsonRFB.Attendance.Web.Models;
@@ -18,7 +19,7 @@ namespace DavidsonRFB.Attendance.Web.Controllers;
 /// directly by URL. Dropped as dead/broken code, not a behavior change for
 /// any real user.
 /// </summary>
-[Authorize]
+[Authorize(AuthenticationSchemes = KioskAuthentication.AadOnlyScheme)]
 public class EmployeeController : Controller
 {
     private readonly AttendanceContext _db;

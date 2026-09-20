@@ -14,20 +14,30 @@ namespace DavidsonRFB.Attendance.Web.Controllers;
 /// UseStatusCodePagesWithReExecute in Program.cs for any 4xx/5xx status
 /// code, and gating it behind auth would just break that for anonymous
 /// visitors hitting an actual error.
+///
+/// Deliberately NOT [HttpGet]-restricted: UseStatusCodePagesWithReExecute
+/// re-executes the pipeline at these routes while preserving the ORIGINAL
+/// request's HTTP method - so a failing POST (e.g. a rejected anti-forgery
+/// token, a 400/403/404/etc. from any mutating action) re-executes here as a
+/// POST too. An [HttpGet]-only constraint made that re-executed POST itself
+/// fail routing with a genuine 405, which silently overwrote and masked the
+/// real original status code by the time it reached the client - caught via
+/// live integration testing (a rejected anti-forgery POST was showing up as
+/// 405 instead of 400) - see docs/DOTNET10_MIGRATION_PLAN.md Decisions log.
+/// These actions must accept any verb, since they're never navigated to
+/// directly by a user with a specific verb in mind.
 /// </summary>
 public class ErrorController : Controller
 {
     // Both of these deliberately shadow ControllerBase helpers of the same
     // name (Unauthorized()/StatusCode(int)) - they're the action methods for
     // the /Error/... routes below, not the result-factory helpers.
-    [HttpGet]
     [Route("Error/Unauthorized")]
     public new IActionResult Unauthorized()
     {
         return View();
     }
 
-    [HttpGet]
     [Route("Error/StatusCode/{code:int}")]
     public new IActionResult StatusCode(int code)
     {
