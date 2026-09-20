@@ -1,0 +1,19 @@
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <text>
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <p class="navbar-text">Hello @(User.FindFirst("preferred_username")?.Value ?? User.Identity!.Name)!</p>
+            </li>
+            <li>
+                @Html.ActionLink("Sign out", "SignOut", "Account")
+            </li>
+        </ul>
+    </text>
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>@Html.ActionLink("Sign in", "SignIn", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" })</li>
+    </ul>
+}

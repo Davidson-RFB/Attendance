@@ -246,3 +246,10 @@ ModelManifest.xml
 
 # ASP.NET Core Data Protection keys (local dev only - see appsettings.Development.json)
 .dataprotection-keys/
+
+# Local docker-compose secrets (real AzureAd tenant/client id etc.) - see .env.example
+.env
+
+# Local HTTPS dev certificate (generated via `dotnet dev-certs https`, see
+# README/docker-compose.yml) - machine-specific, never committed.
+.dev-certs/

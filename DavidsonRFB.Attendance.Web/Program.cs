@@ -117,6 +117,12 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
 }
+
+// Ported from the legacy app's IIS-level <httpErrors> 403 rewrite to
+// /Error/Unauthorized - see Controllers/ErrorController.cs for why this is
+// no longer [Authorize]-gated like the original.
+app.UseStatusCodePagesWithReExecute("/Error/StatusCode/{0}");
+
 app.UseRouting();
 
 app.UseAuthentication();
@@ -129,5 +135,9 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
 app.Run();
+
+// Marker for WebApplicationFactory<Program>-based integration tests (a
+// top-level-statements Program.cs generates an internal Program class by
+// default - this makes it accessible). See DavidsonRFB.Attendance.Web.Tests.
+public partial class Program { }

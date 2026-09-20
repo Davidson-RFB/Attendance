@@ -1,24 +1,25 @@
 using System.Diagnostics;
 using System.Data.Entity;
 using System.Globalization;
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DavidsonRFB.Attendance.Web.Auth;
 using DavidsonRFB.Attendance.Web.DAL;
+using DavidsonRFB.Attendance.Web.Helpers;
 using DavidsonRFB.Attendance.Web.Models;
 
 namespace DavidsonRFB.Attendance.Web.Controllers;
 
-// NOTE: Index/Privacy/Error below are still the Phase 0 scaffolding
-// placeholders as far as their *content* goes - Phase 3 replaces Index's
-// body with the real clock-in/out page and removes Privacy. The
-// [Authorize(AuthenticationSchemes = KioskAuthentication.HomeAndKioskSchemes)]
-// on Index, and CreateCookie/RemoveCookie, are the real, final Phase 2
-// implementation - see docs/DOTNET10_MIGRATION_PLAN.md section 4. Phase 3
-// must carry this same attribute onto Index's real implementation and add it
-// to ClockOut once that action exists.
+/// <summary>
+/// The kiosk sign-in/out page. Index and ClockOut are ported near-verbatim
+/// from the legacy HomeController for behavior parity - including one
+/// pre-existing quirk carried forward unchanged (see the POST Index note
+/// below). CreateCookie/RemoveCookie are the Phase 2 auth implementation.
+/// See docs/DOTNET10_MIGRATION_PLAN.md section 4 for the auth design intent.
+/// </summary>
 public class HomeController : Controller
 {
     private readonly AttendanceContext _db;
@@ -29,20 +30,83 @@ public class HomeController : Controller
     }
 
     [Authorize(AuthenticationSchemes = KioskAuthentication.HomeAndKioskSchemes)]
+    [HttpGet]
     public IActionResult Index()
     {
-        return View();
+        var brigadeId = CurrentBrigade.Resolve(User, _db);
+
+        var employees = _db.Employees.Where(e => e.IsActive && e.BrigadeId == brigadeId).OrderBy(e => e.Name).ToList();
+        employees.Insert(0, new Employee());
+        ViewBag.Employees = employees;
+
+        var jobs = _db.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description).ToList();
+        jobs.Insert(0, new Job());
+        ViewBag.Jobs = jobs;
+
+        Response.Headers.Append("Refresh", "600");
+        return View(new Attendees { CurrentAttendance = _db.Attendances.Where(a => !a.EndDateTime.HasValue && a.Employee.BrigadeId == brigadeId).ToList() });
     }
 
-    public IActionResult Privacy()
+    [Authorize(AuthenticationSchemes = KioskAuthentication.HomeAndKioskSchemes)]
+    [HttpPost]
+    public IActionResult Index(Attendees attendees)
     {
-        return View();
+        var brigadeId = CurrentBrigade.Resolve(User, _db);
+
+        if (ModelState.IsValid)
+        {
+            var currentAttendance = _db.Attendances.FirstOrDefault(a => a.EmployeeId == attendees.EmployeeId &&
+                                                                         !a.EndDateTime.HasValue);
+            if (currentAttendance == null)
+            {
+                // Clock in
+                _db.Attendances.Add(new Models.Attendance
+                {
+                    EmployeeId = attendees.EmployeeId,
+                    JobId = attendees.JobId,
+                    StartDateTime = DateTime.Now
+                });
+                ViewBag.Message = $"{_db.Employees.Single(e => e.Id == attendees.EmployeeId).Name} has been clocked in";
+            }
+            _db.SaveChanges();
+        }
+
+        var employees = _db.Employees.Where(e => e.IsActive && e.BrigadeId == brigadeId).OrderBy(e => e.Name).ToList();
+        employees.Insert(0, new Employee());
+        ViewBag.Employees = employees;
+
+        var jobs = _db.Jobs.Where(j => j.BrigadeId == brigadeId).OrderBy(j => j.Description).ToList();
+        jobs.Insert(0, new Job());
+        ViewBag.Jobs = jobs;
+
+        Response.Headers.Append("Refresh", "600");
+
+        // NOTE: unlike the GET action above, this does NOT filter by
+        // brigadeId - carried forward unchanged from the legacy app (a
+        // pre-existing inconsistency, not introduced by this migration; see
+        // docs/DOTNET10_MIGRATION_PLAN.md Decisions log).
+        return View(new Attendees { CurrentAttendance = _db.Attendances.Where(a => !a.EndDateTime.HasValue).ToList() });
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    [Authorize(AuthenticationSchemes = KioskAuthentication.HomeAndKioskSchemes)]
+    [HttpPost]
+    public IActionResult ClockOut(Attendees attendees)
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        if (attendees.CurrentAttendance != null)
+        {
+            foreach (var attendee in attendees.CurrentAttendance.Where(a => a.Selected))
+            {
+                // Clock out
+                var attendance = _db.Attendances.FirstOrDefault(a => a.Id == attendee.Id && !a.EndDateTime.HasValue);
+                if (attendance != null)
+                {
+                    attendance.EndDateTime = DateTime.Now;
+                }
+            }
+            _db.SaveChanges();
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     // Mints the long-lived Kiosk cookie for the current browser, scoped to
@@ -84,5 +148,11 @@ public class HomeController : Controller
     {
         await HttpContext.SignOutAsync(KioskAuthentication.Scheme);
         return RedirectToAction(nameof(Index));
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
